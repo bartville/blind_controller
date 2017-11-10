@@ -1,4 +1,5 @@
 Header header
 
 string direction
-float32 degree
+string theme
+float32 angle

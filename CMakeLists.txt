@@ -12,13 +12,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   geometry_msgs
+  nav_msgs
   message_generation
 )
 
 add_message_files(
   FILES
-  change_direction.msg
-  motion.msg
+  ChangeDirection.msg
+  Motion.msg
 )
 
 generate_messages(
