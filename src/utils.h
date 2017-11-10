@@ -37,7 +37,10 @@ float euclideanDistance(const RobotPose& a,
 
 float radiansDifference(const RobotPose& a,
 			const RobotPose& b){
-  return atan2(sin(a.yaw-b.yaw), cos(a.yaw-b.yaw));
+  float difference = a.yaw-b.yaw;
+  if(difference > M_PI) difference -= 2*M_PI;
+  if(difference < -M_PI) difference += 2*M_PI;
+  return fabs(difference);
 }
 
 bool checkTerminationCondition(const Action& action, const RobotPose& start, const RobotPose& current){
@@ -46,8 +49,9 @@ bool checkTerminationCondition(const Action& action, const RobotPose& start, con
     if(travelled_distance > action.meter)
       return true;
   }
-  else if(action.frame == Action::Frame::Motion){
+  else if(action.frame == Action::Frame::ChangeDirection){
     float travelled_radians = radiansDifference(start, current);
+    std::cerr << action.rad << "   " << travelled_radians << std::endl;
     if(travelled_radians > action.rad)
       return true;
   }

@@ -20,11 +20,12 @@ void odometryCallback(const nav_msgs::OdometryConstPtr &msg){
   robot_pose.yaw = yawFromQuaternion(msg->pose.pose.orientation.w,
 				     msg->pose.pose.orientation.x,
 				     msg->pose.pose.orientation.y,
-				     msg->pose.pose.orientation.z);  
+				     msg->pose.pose.orientation.z);
+  //std::cerr << "o";
 }
 
 void motionCallback(const blind_controller::Motion::ConstPtr &msg){
-  std::cerr << "[motionCallback]: received message "<< std::endl;
+  std::cerr << "\n[motionCallback]: received message "<< std::endl;
   std::string direction = msg->direction;
   float meter = msg->distance;
   std::cerr << "dir: " << direction << "  di " << meter << " metri" << std::endl;
@@ -49,7 +50,7 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
 }
 
 void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &msg){
-  std::cerr << "[changeDirectionCallback]: received message "<< std::endl;
+  std::cerr << "\n[changeDirectionCallback]: received message "<< std::endl;
   std::string direction = msg->direction;
   float deg = msg->angle;
   float rad;
@@ -64,7 +65,7 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
     new_twist.angular.z = rotational_speed;
   }
   else if(!direction.compare("destra")){
-    new_twist.angular.z = -rotational_speed;
+    new_twist.angular.z = -rotational_speed;    
   }
   else{
     std::cerr << "wrong direction! This message will be destroyed!" << std::endl;
@@ -79,10 +80,11 @@ int main(int argc, char** argv){
   
   ros::init(argc, argv, "BlindControllerNode");
   ros::NodeHandle nh("~");
-
-  std::string odom_topic = "/odom";
+  ROS_INFO("BlindControllerNode started!");
   
-  std::string cmd_vel = "/cmd_vel";
+  std::string odom_topic = "/lucrezio/odom";
+  
+  std::string cmd_vel = "/lucrezio/cmd_vel";
   std::string motion_topic = "/motion";
   std::string change_direction_topic = "/change_direction";
   
