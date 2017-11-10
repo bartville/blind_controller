@@ -70,3 +70,12 @@ float yawFromQuaternion(const float& qw,
   return atan2(2.0 * (qw * qz + qx * qy),
 	       1.0 - 2.0 * (qy * qy + qz * qz));
 }
+
+
+void printBanner(const char** banner) {
+    const char** b = banner;
+    while(*b) {
+        std::cerr << *b << std::endl;
+        b++;
+    }
+}

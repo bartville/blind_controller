@@ -1,9 +1,9 @@
 #include <ros/ros.h>
+#include <unistd.h>
 #include <iostream>
 #include <blind_controller/Motion.h>
 #include <blind_controller/ChangeDirection.h>
 #include <nav_msgs/Odometry.h>
-
 
 #include "utils.h"
 
@@ -76,24 +76,86 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
   action_vector.push_back(new_action);
 }
 
+
+const char* banner[]={
+  "\n\nUsage:  blind_controller_node -twist_topic <twist_topic> -odom-topic <odom_topic> -motion-topic <motion_topic> -change-direction-topic <change_direction_topic> [Options]\n",
+  "Example:  blind_controller_node -odom-topic /odom -motion-topic /motion -change-direction-topic /change_direction \n\n",
+  "Options:\n",
+  "------------------------------------------\n",
+  "-odom-topic <string>             topic name of odometry of the platform, default: /odom",
+  "-twist-topic <string>            topic name of twist to control the platform, default: /cmd_vel",
+  "-motion-topic <string>           topic name of motion command, default: /motion",
+  "-change-direction-topic <string> topic name of change-direction command, default: /change_direction",
+  "-max-trans-speed <float>         maximum translation speed, default 0.1 [m/s]",
+  "-max-rot-speed <float>           maximum translation speed, default 0.1 [rad/s]",
+  "-idle-time <float>               idle/sleep time between consecutive actions, default 0.f",
+  "-h                               this help\n",
+  0
+};
+
 int main(int argc, char** argv){
   
   ros::init(argc, argv, "BlindControllerNode");
   ros::NodeHandle nh("~");
   ROS_INFO("BlindControllerNode started!");
-  
-  std::string odom_topic = "/lucrezio/odom";
-  
-  std::string cmd_vel = "/lucrezio/cmd_vel";
+
+  if(argc < 2){
+    printBanner(banner);
+    return 1;
+  }
+
+  // default values
+  std::string odom_topic = "/odom"; 
+  std::string twist_topic = "/cmd_vel";
   std::string motion_topic = "/motion";
   std::string change_direction_topic = "/change_direction";
+  float idle_time = 0.f;
   
+  int c=1;
+
+  while(c<argc){
+    if (! strcmp(argv[c],"-h")){
+      printBanner(banner);
+      return 1;
+    }
+    else if(! strcmp(argv[c],"-odom-topic")){
+      c++;
+      odom_topic = argv[c];
+    }
+    else if(! strcmp(argv[c],"-twist-topic")){
+      c++;
+      twist_topic = argv[c];
+    }
+    else if(! strcmp(argv[c],"-motion-topic")){
+      c++;
+      motion_topic = argv[c];
+    }
+    else if(! strcmp(argv[c],"-change-direction-topic")){
+      c++;
+      change_direction_topic = argv[c];
+    }
+    else if(! strcmp(argv[c],"-max-trans-speed")){
+      c++;
+      translation_speed = std::atof(argv[c]);
+    }
+    else if(! strcmp(argv[c],"-max-rot-speed")){
+      c++;
+      rotational_speed = std::atof(argv[c]);
+    }
+    else if(! strcmp(argv[c],"-idle-time")){
+      c++;
+      idle_time = std::atof(argv[c]);
+    }
+    c++;
+  }
+  
+ 
   ros::Subscriber odom_sub = nh.subscribe(odom_topic, 10, odometryCallback);
 
   ros::Subscriber motion_sub = nh.subscribe(motion_topic, 10, motionCallback);
   ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 10, changeDirectionCallback);
   
-  ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(cmd_vel, 10);
+  ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 10);
   ros::Rate loop_rate(30);
 
   enum State{IDLE, EXECUTING};
@@ -129,6 +191,7 @@ int main(int argc, char** argv){
 	action_vector.erase(action_vector.begin());         // erase first element
 	current_state = State::EXECUTING;                   // change state to EXECUTING
 	action_starting_pose = robot_pose;                  // reset starting pose
+	usleep(idle_time*1e9); //to microsec
       }
       vel_pub.publish(stop_msg);
     }   
