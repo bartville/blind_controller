@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-RobotPose robot_pose;
+RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
 float translation_speed = 0.1; // 0.1 meter/second
@@ -15,7 +15,10 @@ float rotational_speed = 0.1; // 0.1 rad/second
 float motion_default_value = 0.5; // default value 0.5m
 float change_direction_default_value = 1.5708; // default value 90 degrees
 
+bool firstOdom = true;
+
 void odometryCallback(const nav_msgs::OdometryConstPtr &msg){
+
   // update robot 2D pose
   robot_pose.x = msg->pose.pose.position.x;
   robot_pose.y = msg->pose.pose.position.y;
@@ -24,6 +27,12 @@ void odometryCallback(const nav_msgs::OdometryConstPtr &msg){
 				     msg->pose.pose.orientation.y,
 				     msg->pose.pose.orientation.z);
   //std::cerr << "o";
+
+  if(firstOdom) {
+    firstOdom = false;
+    last_robot_pose = robot_pose;
+  }
+
 }
 
 void motionCallback(const blind_controller::Motion::ConstPtr &msg){
@@ -183,7 +192,10 @@ int main(int argc, char** argv){
     // if the robot is in Executing mode,
     // check for the end of action
     if(current_state == State::EXECUTING) {
-      bool terminated = checkTerminationCondition(current_action, action_starting_pose, robot_pose);
+      bool terminated = checkTerminationCondition(current_action,
+						  action_starting_pose,
+						  last_robot_pose,
+						  robot_pose);
       if(terminated){                             // if the action is completed
 	vel_pub.publish(stop_msg);                // stop the robot
 	current_state = State::IDLE;              // change state to IDLE
