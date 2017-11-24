@@ -11,8 +11,8 @@
 RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
-float translation_speed = 0.1; // 0.1 meter/second
-float rotational_speed = 0.2; // 0.2 rad/second
+float translation_speed = 0.2; // 0.1 meter/second
+float rotational_speed = 0.4; // 0.2 rad/second
 float motion_default_value = 0.5; // default value 0.5m
 float change_direction_default_value = 1.5708; // default value 90 degrees
 
