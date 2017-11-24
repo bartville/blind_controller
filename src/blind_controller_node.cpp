@@ -109,7 +109,7 @@ int main(int argc, char** argv){
   ros::NodeHandle nh("~");
   ROS_INFO("BlindControllerNode started!");
 
-  if(argc < 2){
+  if(argc < 1){
     printBanner(banner);
     return 1;
   }
