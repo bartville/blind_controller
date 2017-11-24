@@ -11,6 +11,9 @@
 RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
+ros::Publisher* ack_pub;
+const std::string bad_ack_msg = "BAD_MSG";
+
 float translation_speed = 0.2; // 0.1 meter/second
 float rotational_speed = 0.4; // 0.2 rad/second
 float motion_default_value = 0.5; // default value 0.5m
@@ -62,6 +65,7 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
   }
   else{
     std::cerr << "wrong direction! This message will be destroyed!" << std::endl;
+    ack_pub->publish(bad_ack_msg);
     return;
   }
   new_action.twist = new_twist;
@@ -102,6 +106,7 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
   }
   else{
     std::cerr << "wrong direction! This message will be destroyed!" << std::endl;
+    ack_pub->publish(bad_ack_msg);
     return;
   }
   new_action.twist = new_twist;
@@ -191,11 +196,11 @@ int main(int argc, char** argv){
  
   ros::Subscriber odom_sub = nh.subscribe(odom_topic, 10, odometryCallback);
 
-  ros::Subscriber motion_sub = nh.subscribe(motion_topic, 10, motionCallback);
-  ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 10, changeDirectionCallback);
+  ros::Subscriber motion_sub = nh.subscribe(motion_topic, 1, motionCallback);
+  ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 1, changeDirectionCallback);
   
   ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 10);
-  ros::Publisher ack_pub = nh.advertise<std_msgs::String>(ack_topic, 10);
+  ack_pub = new ros::Publisher(nh.advertise<std_msgs::String>(ack_topic, 10));
   const std::string ack_msg = "ACK";
 
   ros::Rate loop_rate(30);
@@ -222,7 +227,7 @@ int main(int argc, char** argv){
       if(terminated){                             // if the action is completed
 	vel_pub.publish(stop_msg);                // stop the robot
 	current_state = State::IDLE;              // change state to IDLE
-	ack_pub.publish(ack_msg);
+	ack_pub->publish(ack_msg);
       }else{                                      // otherwise
 	vel_pub.publish(current_action.twist);    // continue moving
       }      
