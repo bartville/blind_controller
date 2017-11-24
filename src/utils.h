@@ -51,7 +51,6 @@ bool checkTerminationCondition(const Action& action, const RobotPose& start, con
   }
   else if(action.frame == Action::Frame::ChangeDirection){
     float travelled_radians = radiansDifference(start, current);
-    std::cerr << action.rad << "   " << travelled_radians << std::endl;
     if(travelled_radians > action.rad)
       return true;
   }

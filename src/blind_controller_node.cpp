@@ -12,6 +12,8 @@ ActionVector action_vector;
 
 float translation_speed = 0.1; // 0.1 meter/second
 float rotational_speed = 0.1; // 0.1 rad/second
+float motion_default_value = 0.5; // default value 0.5m
+float change_direction_default_value = 1.5708; // default value 90 degrees
 
 void odometryCallback(const nav_msgs::OdometryConstPtr &msg){
   // update robot 2D pose
@@ -45,7 +47,11 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
     return;
   }
   new_action.twist = new_twist;
-  new_action.meter = meter;
+  
+  new_action.meter = motion_default_value;
+  if (meter > 1e-6) {
+    new_action.meter = meter;
+  }
   action_vector.push_back(new_action);
 }
 
@@ -72,7 +78,11 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
     return;
   }
   new_action.twist = new_twist;
-  new_action.rad = rad;
+
+  new_action.rad = change_direction_default_value;
+  if (rad > 1e-6) {
+    new_action.rad = rad;
+  }
   action_vector.push_back(new_action);
 }
 
