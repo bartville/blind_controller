@@ -14,8 +14,8 @@ ActionVector action_vector;
 ros::Publisher* ack_pub;
 const std::string bad_ack_msg = "BAD_MSG";
 
-float translation_speed = 0.2; // 0.1 meter/second
-float rotational_speed = 0.4; // 0.2 rad/second
+float translation_speed = 0.2; // 0.2 meter/second
+float rotational_speed = 0.4; // 0.4 rad/second
 float motion_default_value = 0.5; // default value 0.5m
 float change_direction_default_value = 1.5708; // default value 90 degrees
 
@@ -129,8 +129,8 @@ const char* banner[]={
   "-motion-topic <string>           topic name of motion command, default: /motion",
   "-change-direction-topic <string> topic name of change-direction command, default: /change_direction",
   "-ack-topic <string>              topic name of ack signal, default: /blind_controller_ack",
-  "-max-trans-speed <float>         maximum translation speed, default 0.1 [m/s]",
-  "-max-rot-speed <float>           maximum translation speed, default 0.1 [rad/s]",
+  "-max-trans-speed <float>         maximum translation speed, default 0.2 [m/s]",
+  "-max-rot-speed <float>           maximum translation speed, default 0.4 [rad/s]",
   "-idle-time <float>               idle/sleep time between consecutive actions, default 0.f",
   "-h                               this help\n",
   0
