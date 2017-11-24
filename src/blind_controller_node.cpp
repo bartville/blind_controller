@@ -4,6 +4,7 @@
 #include <blind_controller/Motion.h>
 #include <blind_controller/ChangeDirection.h>
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/String.h>
 
 #include "utils.h"
 
@@ -11,7 +12,7 @@ RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
 float translation_speed = 0.1; // 0.1 meter/second
-float rotational_speed = 0.1; // 0.1 rad/second
+float rotational_speed = 0.2; // 0.2 rad/second
 float motion_default_value = 0.5; // default value 0.5m
 float change_direction_default_value = 1.5708; // default value 90 degrees
 
@@ -38,6 +39,7 @@ void odometryCallback(const nav_msgs::OdometryConstPtr &msg){
 void motionCallback(const blind_controller::Motion::ConstPtr &msg){
   std::cerr << "\n[motionCallback]: received message "<< std::endl;
   std::string direction = msg->direction;
+  std::string speed = msg->speed;
   float meter = msg->distance;
   std::cerr << "dir: " << direction << "  di " << meter << " metri" << std::endl;
 
@@ -45,11 +47,18 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
   new_action.frame = Action::Frame::Motion;
   geometry_msgs::Twist new_twist;
 
+  int speed_scale = 1;
+  if(!speed.compare("velocemente"))
+    speed_scale *=2;
+  else if(!speed.compare("lentamente"))
+    speed_scale /=2;
+
+
   if(!direction.compare("avanti")){
-    new_twist.linear.x = translation_speed;
+    new_twist.linear.x = translation_speed*speed_scale;
   }
   else if(!direction.compare("indietro")){
-    new_twist.linear.x = -translation_speed;
+    new_twist.linear.x = -translation_speed*speed_scale;
   }
   else{
     std::cerr << "wrong direction! This message will be destroyed!" << std::endl;
@@ -67,6 +76,7 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
 void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &msg){
   std::cerr << "\n[changeDirectionCallback]: received message "<< std::endl;
   std::string direction = msg->direction;
+  std::string speed = msg->speed;
   float deg = msg->angle;
   float rad;
   deg2rad(rad, deg);
@@ -76,11 +86,19 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
   new_action.frame = Action::Frame::ChangeDirection;
   geometry_msgs::Twist new_twist;
 
+
+  int speed_scale = 1;
+  if(!speed.compare("velocemente"))
+    speed_scale *=2;
+  else if(!speed.compare("lentamente"))
+    speed_scale /=2;
+
+
   if(!direction.compare("sinistra")){
-    new_twist.angular.z = rotational_speed;
+    new_twist.angular.z = rotational_speed*speed_scale;
   }
   else if(!direction.compare("destra")){
-    new_twist.angular.z = -rotational_speed;    
+    new_twist.angular.z = -rotational_speed*speed_scale;    
   }
   else{
     std::cerr << "wrong direction! This message will be destroyed!" << std::endl;
@@ -105,6 +123,7 @@ const char* banner[]={
   "-twist-topic <string>            topic name of twist to control the platform, default: /cmd_vel",
   "-motion-topic <string>           topic name of motion command, default: /motion",
   "-change-direction-topic <string> topic name of change-direction command, default: /change_direction",
+  "-ack-topic <string>              topic name of ack signal, default: /blind_controller_ack",
   "-max-trans-speed <float>         maximum translation speed, default 0.1 [m/s]",
   "-max-rot-speed <float>           maximum translation speed, default 0.1 [rad/s]",
   "-idle-time <float>               idle/sleep time between consecutive actions, default 0.f",
@@ -128,6 +147,7 @@ int main(int argc, char** argv){
   std::string twist_topic = "/cmd_vel";
   std::string motion_topic = "/motion";
   std::string change_direction_topic = "/change_direction";
+  std::string ack_topic = "/blind_controller_ack";
   float idle_time = 0.f;
   
   int c=1;
@@ -175,6 +195,9 @@ int main(int argc, char** argv){
   ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 10, changeDirectionCallback);
   
   ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 10);
+  ros::Publisher ack_pub = nh.advertise<std_msgs::String>(ack_topic, 10);
+  const std::string ack_msg = "ACK";
+
   ros::Rate loop_rate(30);
 
   enum State{IDLE, EXECUTING};
@@ -199,6 +222,7 @@ int main(int argc, char** argv){
       if(terminated){                             // if the action is completed
 	vel_pub.publish(stop_msg);                // stop the robot
 	current_state = State::IDLE;              // change state to IDLE
+	ack_pub.publish(ack_msg);
       }else{                                      // otherwise
 	vel_pub.publish(current_action.twist);    // continue moving
       }      

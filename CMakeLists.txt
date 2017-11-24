@@ -11,6 +11,7 @@ SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  std_msgs
   geometry_msgs
   nav_msgs
   message_generation
