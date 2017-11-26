@@ -57,7 +57,7 @@ void motionCallback(const blind_controller::Motion::ConstPtr &msg){
     speed_scale /=2;
 
 
-  if(!direction.compare("avanti")){
+  if(!direction.compare("avanti") || !direction.compare("dritto")){
     new_twist.linear.x = translation_speed*speed_scale;
   }
   else if(!direction.compare("indietro")){
