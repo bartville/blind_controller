@@ -12,7 +12,7 @@ RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
 ros::Publisher* ack_pub;
-const std::string bad_ack_msg = "BAD_MSG";
+const std::string bad_ack_msg = "BADMSG";
 
 float translation_speed = 0.2; // 0.2 meter/second
 float rotational_speed = 0.4; // 0.4 rad/second
