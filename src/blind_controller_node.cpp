@@ -186,8 +186,8 @@ int main(int argc, char** argv){
 
 
   ros::Subscriber odom_sub = nh.subscribe(odom_topic, 10, odometryCallback);
-  ros::Subscriber motion_sub = nh.subscribe(motion_topic, 1, motionCallback);
-  ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 1, changeDirectionCallback);
+  ros::Subscriber motion_sub = nh.subscribe(motion_topic, 10, motionCallback);
+  ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 10, changeDirectionCallback);
   
   ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 10);
   ack_pub = new ros::Publisher(nh.advertise<std_msgs::String>(ack_topic, 10));
