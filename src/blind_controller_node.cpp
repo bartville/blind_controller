@@ -12,10 +12,12 @@ RobotPose robot_pose, last_robot_pose;
 ActionVector action_vector;
 
 ros::Publisher* ack_pub;
+
+const std::string ack_msg = "ACK";
 const std::string bad_ack_msg = "BADMSG";
 
-float translation_speed = 0.2; // 0.2 meter/second
-float rotational_speed = 0.4; // 0.4 rad/second
+float translation_speed;
+float rotational_speed;
 float motion_default_value = 0.5; // default value 0.5m
 float change_direction_default_value = 1.5708; // default value 90 degrees
 
@@ -120,19 +122,19 @@ void changeDirectionCallback(const blind_controller::ChangeDirection::ConstPtr &
 
 
 const char* banner[]={
-  "\n\nUsage:  blind_controller_node -twist_topic <twist_topic> -odom-topic <odom_topic> -motion-topic <motion_topic> -change-direction-topic <change_direction_topic> [Options]\n",
-  "Example:  blind_controller_node -odom-topic /odom -motion-topic /motion -change-direction-topic /change_direction \n\n",
+  "\n\nUsage:  blind_controller_node _twist_topic:= <twist_topic> _odom_topic:= <odom_topic> _motion_topic:= <motion_topic> _change_direction_topic:= <change_direction_topic> [Options]\n",
+  "Example:  blind_controller_node _odom_topic:= /odom _motion_topic:= /motion _change_direction_topic:= /change_direction \n\n",
   "Options:\n",
   "------------------------------------------\n",
-  "-odom-topic <string>             topic name of odometry of the platform, default: /odom",
-  "-twist-topic <string>            topic name of twist to control the platform, default: /cmd_vel",
-  "-motion-topic <string>           topic name of motion command, default: /motion",
-  "-change-direction-topic <string> topic name of change-direction command, default: /change_direction",
-  "-ack-topic <string>              topic name of ack signal, default: /blind_controller_ack",
-  "-max-trans-speed <float>         maximum translation speed, default 0.2 [m/s]",
-  "-max-rot-speed <float>           maximum translation speed, default 0.4 [rad/s]",
-  "-idle-time <float>               idle/sleep time between consecutive actions, default 0.f",
-  "-h                               this help\n",
+  "_odom_topic:= <string>             topic name of odometry of the platform, default: /odom",
+  "_twist_topic:= <string>            topic name of twist to control the platform, default: /cmd_vel",
+  "_motion_topic:= <string>           topic name of motion command, default: /motion",
+  "_change_direction_topic:= <string> topic name of change_direction command, default: /change_direction",
+  "_ack_topic:= <string>              topic name of ack signal, default: /blind_controller_ack",
+  "_max_trans_speed:= <float>         maximum translation speed, default 0.2 [m/s]",
+  "_max_rot_speed:= <float>           maximum translation speed, default 0.4 [rad/s]",
+  "_idle_time:= <float>               idle/sleep time between consecutive actions, default 0.f",
+  "-h                                 this help\n",
   0
 };
 
@@ -146,62 +148,49 @@ int main(int argc, char** argv){
     printBanner(banner);
     return 1;
   }
-
-  // default values
-  std::string odom_topic = "/odom"; 
-  std::string twist_topic = "/cmd_vel";
-  std::string motion_topic = "/motion";
-  std::string change_direction_topic = "/change_direction";
-  std::string ack_topic = "/blind_controller_ack";
-  float idle_time = 0.f;
-  
-  int c=1;
-
+  int c = 1;
   while(c<argc){
     if (! strcmp(argv[c],"-h")){
       printBanner(banner);
       return 1;
     }
-    else if(! strcmp(argv[c],"-odom-topic")){
-      c++;
-      odom_topic = argv[c];
-    }
-    else if(! strcmp(argv[c],"-twist-topic")){
-      c++;
-      twist_topic = argv[c];
-    }
-    else if(! strcmp(argv[c],"-motion-topic")){
-      c++;
-      motion_topic = argv[c];
-    }
-    else if(! strcmp(argv[c],"-change-direction-topic")){
-      c++;
-      change_direction_topic = argv[c];
-    }
-    else if(! strcmp(argv[c],"-max-trans-speed")){
-      c++;
-      translation_speed = std::atof(argv[c]);
-    }
-    else if(! strcmp(argv[c],"-max-rot-speed")){
-      c++;
-      rotational_speed = std::atof(argv[c]);
-    }
-    else if(! strcmp(argv[c],"-idle-time")){
-      c++;
-      idle_time = std::atof(argv[c]);
-    }
     c++;
   }
   
- 
-  ros::Subscriber odom_sub = nh.subscribe(odom_topic, 10, odometryCallback);
+  // set of parameters
+  std::string odom_topic; 
+  std::string twist_topic;
+  std::string motion_topic;
+  std::string change_direction_topic;
+  std::string ack_topic;
+  float idle_time;
+  nh.param<std::string>("odom_topic", odom_topic, "/odom");
+  nh.param<std::string>("twist_topic", twist_topic, "/blind/cmd_vel");
+  nh.param<std::string>("motion_topic", motion_topic, "/motion");
+  nh.param<std::string>("change_direction_topic", change_direction_topic, "/change_direction");
+  nh.param<std::string>("ack_topic", ack_topic, "/blind_controller_ack");
+  nh.param<float>("max_trans_speed", translation_speed, 0.2f);
+  nh.param<float>("max_rot_speed", rotational_speed, 0.4f);
+  nh.param<float>("idle_time", idle_time, 0.f);
 
+  
+  std::cerr << "Using the following params:\n";
+  std::cerr << "_odom_topic:=             " << odom_topic << std::endl;
+  std::cerr << "_twist_topic:=            " << twist_topic << std::endl;
+  std::cerr << "_motion_topic:=           " << motion_topic << std::endl;
+  std::cerr << "_change_direction_topic:= " << change_direction_topic << std::endl;
+  std::cerr << "_ack_topic:=              " << ack_topic << std::endl;
+  std::cerr << "_max_trans_speed:=        " << translation_speed << std::endl;
+  std::cerr << "_max_rot_speed:=          " << rotational_speed << std::endl;
+  std::cerr << "_idle_time:=              " << idle_time << std::endl;    
+
+
+  ros::Subscriber odom_sub = nh.subscribe(odom_topic, 10, odometryCallback);
   ros::Subscriber motion_sub = nh.subscribe(motion_topic, 1, motionCallback);
   ros::Subscriber change_dir_sub = nh.subscribe(change_direction_topic, 1, changeDirectionCallback);
   
   ros::Publisher vel_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 10);
   ack_pub = new ros::Publisher(nh.advertise<std_msgs::String>(ack_topic, 10));
-  const std::string ack_msg = "ACK";
 
   ros::Rate loop_rate(30);
 
